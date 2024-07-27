@@ -37,7 +37,3 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 ## Contact
 
 For any questions or inquiries, please contact [Umar Hajam](umerayoub54@gmail.com).
-
----
-
-Feel free to customize the README further to suit your needs. Let me know if there are any specific details or sections you'd like to add.
