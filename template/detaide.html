@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DetAide Chat Interface</title>
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #333;
+            color: #ccc;
+        }
+
+        .main-container {
+            display: flex;
+            flex-direction: column; /* Stack chat-container and footer */
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            margin-right: 0; /* Initial margin for sidebar */
+            transition: margin-right 0.3s ease; /* Smooth transition */
+        }
+
+        .sidebar {
+            width: 300px;
+            background: #222;
+            color: #fff;
+            padding: 0; /* Remove padding from sidebar to align headers */
+            overflow-y: auto;
+            position: fixed;
+            right: 0; /* Sidebar to the right */
+            top: 0;
+            height: 100%;
+            z-index: 2; /* Ensure sidebar is over other content */
+            border-left: 2px solid #444; /* Add a defined border */
+            transform: translateX(300px); /* Hidden initially */
+            transition: transform 0.3s ease; /* Smooth transition */
+        }
+
+        .sidebar.active {
+            transform: translateX(0); /* Show sidebar */
+        }
+
+        .chat-container {
+            flex: 1; /* Allow chat-container to grow and fill available space */
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            justify-content: flex-start;
+            background: #222;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            transition: margin-right 0.3s ease; /* Smooth transition */
+        }
+
+        .toggle-button {
+            position: fixed;
+            right: 10px; /* Move toggle button to the right */
+            top: 10px;
+            z-index: 3;
+            cursor: pointer;
+            font-size: 24px;
+            color: #fff;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+            color: #fff;
+            padding: 15px;
+            font-size: 1.4rem;
+            font-weight: bold;
+            margin: 0; /* Ensure no margin for consistent height */
+            position: relative; /* Position relative for logo placement */
+        }
+
+        .header img {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 50px;
+            height: 50px;
+        }
+
+        .messages {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .message {
+            padding: 12px;
+            border-radius: 18px;
+            line-height: 1.6;
+            font-size: 1.1rem;
+        }
+
+        .input-message {
+            align-self: flex-end; /* Align input messages to the right */
+            background: #404040;
+            color: #ddd;
+            border: 2px solid #585858;
+            border-radius: 18px;
+            padding: 12px;
+            line-height: 1.6;
+            font-size: 1.1rem;
+        }
+
+        .response-message {
+            align-self: flex-start; /* Align response messages to the left */
+            background: #000000;
+            color: #ddd;
+            border: 2px solid #585858;
+            border-radius: 18px;
+            padding: 12px;
+            line-height: 1.6;
+            font-size: 1.1rem;
+        }
+
+        .input-area {
+            display: flex;
+            padding: 10px;
+            background: #333;
+            border-top: 2px solid #444;
+        }
+
+        input[type="text"] {
+            flex-grow: 1;
+            padding: 10px;
+            border: 2px solid #555;
+            border-radius: 10px;
+            background: #222;
+            color: #ddd;
+            font-size: 1.1rem;
+            margin-right: 10px; /* Add margin to separate from button */
+        }
+
+        button {
+            padding: 10px 20px; /* Reduced width */
+            background-color: #000;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: #505050;
+        }
+
+        .footer {
+            background: #191919;
+            color: white;
+            display: flex;
+            flex-wrap: wrap; /* Ensure items wrap on small screens */
+            justify-content: space-around;
+            align-items: center;
+            font-size: 0.9rem;
+            padding: 20px; /* Add padding to footer */
+            text-align: center; /* Center-align text */
+        }
+
+        .footer-column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            flex: 1; /* Ensure columns take equal space */
+        }
+
+        .footer p {
+            margin: 5px;
+        }
+
+        .sidebar h3, .link {
+            color: #ffd700; /* Gold color for headings and links */
+        }
+
+        .link-container {
+            background: rgba(255, 215, 0, 0.2); /* Light glass effect */
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .link {
+            color: #ffd700; /* Gold color for links */
+            text-decoration: none;
+            display: block;
+            padding: 5px;
+        }
+
+        .link:hover {
+            background: rgba(255, 215, 0, 0.3); /* Slightly darker on hover */
+        }
+
+        .tip-container {
+            background: #333;
+            margin-top: 20px;
+            padding: 10px;
+            border-left: 3px solid #ffd700;
+        }
+
+        .tip {
+            color: #ddd;
+        }
+
+        @keyframes wiggle-dots {
+            0% {
+                opacity: 0.2;
+            }
+            20% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0.2;
+            }
+        }
+
+        .loading-dots {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            padding: 12px;
+            border-radius: 18px;
+            line-height: 1.6;
+            font-size: 1.1rem;
+            color: #ddd;
+            border: 2px solid #585858;
+            background: #000000;
+            align-self: flex-start; /* Align loading message to the left */
+        }
+
+        .loading-dots span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #ddd;
+            border-radius: 50%;
+            animation: wiggle-dots 1.4s infinite ease-in-out both;
+        }
+
+        .loading-dots span:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .loading-dots span:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                width: 100%;
+                margin-right: 0;
+            }
+
+            .chat-container {
+                margin-right: 0;
+            }
+
+            .sidebar {
+                transform: translateX(300px); /* Hide sidebar on small screens */
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="toggle-button" onclick="toggleSidebar()">☰</div>
+<div class="main-container">
+    <div class="chat-container">
+        <div class="header">
+            <img src="logo/cqai.jpg" alt="Logo">
+            DetAide
+        </div>
+        <div class="messages" id="chat">
+            <!-- Messages will appear here -->
+            <div class="message response-message">
+                Hello and welcome! I am the CQAI Assistant. I'll help you with any queries you may have. Feel free to ask me anything!
+            </div>
+        </div>
+        <div class="input-area">
+            <input type="text" id="query" placeholder="Type your query here..." onkeypress="handleKeyPress(event)">
+            <button onclick="invokeAPI()">Send</button>
+        </div>
+    </div>
+    <div class="footer">
+        <div class="footer-column">
+            <p>Contact Us</p>
+            <p>Email: umar.cqai@gmail.com</p>
+            <p>Phone: (+91) 7889911471</p>
+        </div>
+        <div class="footer-column">
+            <p>About Us</p>
+            <p>We are a team dedicated to providing top-notch AI solutions.</p>
+        </div>
+        <div class="footer-column">
+            <p>Follow Us</p>
+            <p>Twitter: @DetAideAI</p>
+            <p>LinkedIn: DetAide AI</p>
+        </div>
+        <div class="footer-column">
+            <p>&copy; 2024 Umar Hajam</p>
+            <p>All rights reserved.</p>
+            <p>Version: 1.0.0 - Enhanced Dark Mode</p>
+        </div>
+    </div>
+</div>
+<div class="sidebar">
+    <div class="header">Navigation</div> <!-- Add matching header -->
+    <div class="link-container"><a href="https://www.linkedin.com/company/chinarqai/?originalSubdomain=in" class="link">Home</a></div>
+    <div class="link-container"><a href="#" class="link">About Us</a></div>
+    <div class="link-container"><a href="#" class="link">Services</a></div>
+    <div class="link-container"><a href="#" class="link">Contact</a></div>
+
+    <div class="tip-container">
+        <h3>Notes</h3>
+        <div class="tip">
+            Tip: You can ask me anything about quantum computing or our AI services!
+        </div>
+    </div>
+</div>
+
+<script>
+    let sessionID = generateSessionID();
+    let appName = '';
+
+    window.onload = function () {
+        sessionID = generateSessionID();
+        appName = prompt("Please enter the App Name:", "");
+    };
+
+    function generateSessionID() {
+        return Math.random().toString(36).substring(2, 15);
+    }
+
+    function handleKeyPress(event) {
+        if (event.key === "Enter") {
+            invokeAPI();
+        }
+    }
+
+    async function invokeAPI() {
+        const input = document.getElementById('query');
+        const query = input.value;
+        if (!query) return;
+
+        appendMessage(query, 'input-message');
+        input.value = '';
+
+        const loadingDots = createLoadingDots();
+        document.getElementById('chat').appendChild(loadingDots);
+        document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
+
+        try {
+            const response = await fetch(`http://localhost:8080/invoke/${appName}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({session_id: sessionID, query: query})
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            loadingDots.remove();
+            appendMessage(data.result, 'response-message');
+        } catch (error) {
+            loadingDots.remove();
+            appendMessage('Error: ' + error.message, 'response-message');
+        }
+    }
+
+    function appendMessage(text, className) {
+        const chat = document.getElementById('chat');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message ' + className;
+        messageDiv.textContent = text;
+        chat.appendChild(messageDiv);
+        chat.scrollTop = chat.scrollHeight;
+    }
+
+    function createLoadingDots() {
+        const loadingDots = document.createElement('div');
+        loadingDots.className = 'loading-dots';
+        loadingDots.innerHTML = '<span></span><span></span><span></span>';
+        return loadingDots;
+    }
+
+    function toggleSidebar() {
+        var sidebar = document.querySelector('.sidebar');
+        sidebar.classList.toggle('active');
+        var mainContainer = document.querySelector('.main-container');
+        if (sidebar.classList.contains('active')) {
+            mainContainer.style.marginRight = '300px';
+        } else {
+            mainContainer.style.marginRight = '0';
+        }
+    }
+</script>
+</body>
+</html>

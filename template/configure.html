@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Settings</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            width: 350px;
+        }
+        input, textarea, button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        button {
+            background-color: #5c67f2;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #5058e5;
+        }
+        .response {
+            margin-top: 20px;
+            background-color: #e8e8e8;
+            padding: 10px;
+            border-radius: 5px;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <input type="text" id="appName" placeholder="Enter App Name" required autofocus>
+        <button onclick="fetchSettings()">Get Settings</button>
+        <textarea id="settingsData" placeholder="Settings will appear here..."></textarea>
+        <button onclick="updateSettings()">Update Settings</button>
+        <div class="response" id="responseArea"></div>
+    </div>
+
+    <script>
+        function fetchSettings() {
+            const appName = document.getElementById('appName').value;
+            const responseArea = document.getElementById('responseArea');
+            fetch(`http://localhost:8080/settings/${appName}`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('settingsData').value = JSON.stringify(data, null, 2);
+                responseArea.textContent = "Settings fetched successfully.";
+            })
+            .catch(error => {
+                responseArea.textContent = 'Error: ' + error.message;
+            });
+        }
+
+        function updateSettings() {
+            const appName = document.getElementById('appName').value;
+            const settings = document.getElementById('settingsData').value;
+            const responseArea = document.getElementById('responseArea');
+
+            try {
+                fetch(`http://localhost:8080/settings/${appName}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        settings: JSON.parse(settings)
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    responseArea.textContent = 'Update Result: ' + JSON.stringify(data, null, 2);
+                })
+            } catch (error) {
+                responseArea.textContent = 'Error parsing settings JSON: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
